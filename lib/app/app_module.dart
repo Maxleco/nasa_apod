@@ -4,6 +4,7 @@ import 'package:nasa_clean_arch/app/features/data/datasources/nasa_datasource.da
 import 'package:nasa_clean_arch/app/features/data/repositories/space_media_repository.dart';
 import 'package:nasa_clean_arch/app/features/domain/usecases/get_space_media_from_date_usecase.dart';
 import 'package:nasa_clean_arch/app/features/presenter/home/home_controller.dart';
+import 'package:nasa_clean_arch/app/features/presenter/home/pages/space_media_page.dart';
 import 'features/presenter/home/home_page.dart';
 
 class AppModule extends Module {
@@ -12,13 +13,15 @@ class AppModule extends Module {
     Bind.lazySingleton((i) => HttpClient()),
     Bind.lazySingleton((i) => NasaDatasource(i<HttpClient>())),
     Bind.lazySingleton((i) => SpaceMediaRepository(i<NasaDatasource>())),
-    Bind.lazySingleton((i) => GetSpaceMediaFromDateUsecase(i<SpaceMediaRepository>())),
-    Bind.lazySingleton((i) => HomeController(i<GetSpaceMediaFromDateUsecase>())),
+    Bind.lazySingleton(
+        (i) => GetSpaceMediaFromDateUsecase(i<SpaceMediaRepository>())),
+    Bind.lazySingleton(
+        (i) => HomeController(i<GetSpaceMediaFromDateUsecase>())),
   ];
 
   @override
   final List<ModularRoute> routes = [
     ChildRoute(Modular.initialRoute, child: (_, args) => HomePage()),
+    ChildRoute('/space-media', child: (_, args) => SpaceMediaPage()),
   ];
-
 }

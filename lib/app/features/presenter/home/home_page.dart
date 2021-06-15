@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
+
+import 'home_controller.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -8,6 +11,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final controller = Modular.get<HomeController>();
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -48,7 +53,7 @@ class _HomePageState extends State<HomePage> {
                 shape: ContinuousRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
-                onPressed: () {},
+                onPressed: () => controller.selectData(context),
               ),
             ),
           ),
