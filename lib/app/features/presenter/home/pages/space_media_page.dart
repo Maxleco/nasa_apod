@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:nasa_clean_arch/app/core/usecase/errors/failure_nasa.dart';
+import 'package:nasa_clean_arch/app/features/data/models/space_media_model.dart';
 import 'package:nasa_clean_arch/app/features/presenter/home/home_controller.dart';
+import 'package:vimeo_player_flutter/vimeo_player_flutter.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class SpaceMediaPage extends StatefulWidget {
   const SpaceMediaPage({Key? key}) : super(key: key);
@@ -18,7 +21,7 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
   void initState() {
     super.initState();
     controller.init();
-    // controller.getSpaceMedia();
+    controller.getSpaceMedia();
   }
 
   @override
@@ -38,15 +41,10 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
       ),
       body: Observer(
         builder: (_) {
-          //* Alternativa in Server ERRO
-          return altCardSlide(context, size);
-
           if (controller.loading) {
-            return Expanded(
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation(Colors.indigoAccent),
-                ),
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation(Colors.indigoAccent),
               ),
             );
           }
@@ -56,19 +54,15 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
               () => Container(),
               (failureResult) {
                 if (failureResult is NasaServerFailure) {
-                  return Expanded(
-                    child: Center(
-                      child: Text('Falha ao recuperar os Dados!'),
-                    ),
+                  return Center(
+                    child: Text('Falha ao recuperar os Dados!'),
                   );
                 }
                 if (failureResult is NasaServerException) {
-                  return Expanded(
-                    child: Center(
-                      child: Text(
-                        'ERRO NA CONEXÃO AO SERVER!',
-                        style: TextStyle(color: Colors.redAccent),
-                      ),
+                  return Center(
+                    child: Text(
+                      'ERRO NA CONEXÃO AO SERVER!',
+                      style: TextStyle(color: Colors.redAccent),
                     ),
                   );
                 }
@@ -79,100 +73,9 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
 
           return controller.spacemedia.fold(() => Container(), (spacemedia) {
             if (spacemedia.mediaType == 'image') {
-              return Expanded(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: size.width,
-                      height: size.height,
-                      alignment: AlignmentDirectional.center,
-                      child: CachedNetworkImage(
-                        width: size.width,
-                        height: size.height,
-                        fit: BoxFit.cover,
-                        imageUrl: spacemedia.mediaUrl,
-                        progressIndicatorBuilder:
-                            (context, url, downloadProgress) {
-                          return Container(
-                            width: 30,
-                            height: 30,
-                            alignment: AlignmentDirectional.center,
-                            child: CircularProgressIndicator(
-                                value: downloadProgress.progress),
-                          );
-                        },
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      child: Container(
-                        padding: EdgeInsets.only(bottom: 10),
-                        width: size.width,
-                        height: size.height * 0.10,
-                        decoration: BoxDecoration(
-                          color: Colors.black38,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.keyboard_arrow_up,
-                              color: Colors.grey[400],
-                            ),
-                            Text(
-                              'Slide up to see the description.',
-                              style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Positioned(
-                    //   bottom: 0,
-                    //   child: Container(
-                    //     padding: EdgeInsets.all(10),
-                    //     width: size.width,
-                    //     height: size.height * 0.25,
-                    //     decoration: BoxDecoration(
-                    //       color: Colors.black38,
-                    //     ),
-                    //     child: Column(
-                    //       mainAxisAlignment: MainAxisAlignment.start,
-                    //       crossAxisAlignment: CrossAxisAlignment.start,
-                    //       children: [
-                    //         Text(
-                    //           spacemedia.title,
-                    //           style: TextStyle(
-                    //             fontSize: 14,
-                    //             color: Colors.white,
-                    //             fontWeight: FontWeight.w500,
-                    //           ),
-                    //         ),
-                    //         SizedBox(height: 10),
-                    //         Expanded(
-                    //           child: Text(
-                    //             spacemedia.description,
-                    //             style: TextStyle(
-                    //               fontSize: 13,
-                    //               color: Colors.white,
-                    //               fontWeight: FontWeight.w400,
-                    //             ),
-                    //           ),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
-                  ],
-                ),
-              );
+              return getSpaceMediaImage(spacemedia, size);
             } else {
-              return Container();
+              return getSpaceMediaVideo(spacemedia, size);
             }
           });
         },
@@ -180,9 +83,7 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
     );
   }
 
-  final desc =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.";
-  Widget altCardSlide(BuildContext context, Size size) {
+  Widget getSpaceMediaImage(SpaceMediaModel spacemedia, Size size) {
     return Stack(
       children: [
         Container(
@@ -193,15 +94,15 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
             width: size.width,
             height: size.height,
             fit: BoxFit.cover,
-            imageUrl:
-                'https://d1otjdv2bf0507.cloudfront.net/images/Article_Images/ImageForArticle_4983(1).jpg',
-            progressIndicatorBuilder: (context, url, downloadProgress) {
+            imageUrl: spacemedia.mediaUrl,
+            placeholder: (context, url) {
               return Container(
                 width: 30,
                 height: 30,
                 alignment: AlignmentDirectional.center,
-                child:
-                    CircularProgressIndicator(value: downloadProgress.progress),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation(Colors.indigoAccent),
+                ),
               );
             },
             errorWidget: (context, url, error) => Icon(Icons.error),
@@ -219,7 +120,7 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
                 color: Color.fromRGBO(0, 0, 0, 0),
               ),
               Container(
-                height: size.height * 0.4,
+                height: size.height * 0.42,
                 decoration: BoxDecoration(
                   color: Colors.black54,
                 ),
@@ -267,15 +168,15 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.all(10),
+                      padding: EdgeInsets.only(top: 10, left: 10, right: 10),
                       width: size.width,
-                      height: size.height * 0.25,
+                      height: size.height * 0.3425,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Title Space Media',
+                            spacemedia.title,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.white,
@@ -285,7 +186,7 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
                           SizedBox(height: 10),
                           Expanded(
                             child: Text(
-                              this.desc,
+                              spacemedia.description,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.white,
@@ -302,6 +203,82 @@ class _SpaceMediaPageState extends State<SpaceMediaPage> {
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget getSpaceMediaVideo(SpaceMediaModel spacemedia, Size size) {
+    String videoId = '';
+    late Widget video;
+    bool isYoutube = spacemedia.mediaUrl.contains('youtube');
+    bool isVimeo = spacemedia.mediaUrl.contains('vimeo');
+
+    if (isVimeo) {
+      String idvimeo = spacemedia.mediaUrl
+          .replaceFirst('https://player.vimeo.com/video/', '');
+      videoId = idvimeo.split('?').first;
+      print(videoId.trim());
+      video = VimeoPlayer(videoId: videoId.trim());
+    }
+    if (isYoutube) {
+      videoId = YoutubePlayer.convertUrlToId(spacemedia.mediaUrl)!;
+      YoutubePlayerController _controller = YoutubePlayerController(
+        initialVideoId: videoId,
+        flags: YoutubePlayerFlags(
+          autoPlay: true,
+          mute: true,
+        ),
+      );
+      video = YoutubePlayer(
+        controller: _controller,
+        showVideoProgressIndicator: true,
+        progressColors: ProgressBarColors(
+          playedColor: Colors.indigo,
+          handleColor: Colors.indigoAccent,
+        ),
+        onReady: () {
+          _controller.play();
+        },
+      );
+    }
+
+    return ListView(
+      children: [
+        Container(
+          height: 250,
+          child: video,
+        ),
+        SizedBox(height: 15),
+        Container(
+            padding: EdgeInsets.all(10),
+            width: size.width,
+            height: size.height * 0.5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+        spacemedia.title,
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.indigo[900],
+          fontWeight: FontWeight.w700,
+        ),
+                ),
+                SizedBox(height: 10),
+                Expanded(
+        child: Text(
+          spacemedia.description,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.indigo[900],
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
